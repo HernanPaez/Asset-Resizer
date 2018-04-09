@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) [year] [fullname]
+Copyright (c) 2018 Luis go Hernan Paez
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 package main
 
 import (
@@ -73,6 +74,7 @@ func main() {
 	}
 }
 
+//Scales an image from @2x -> @3x @1x
 func scaleFromRetina(img1 image.Image, name string) error {
 	originalWidth := float64(img1.Bounds().Max.X)
 	originalHeight := float64(img1.Bounds().Max.Y)
@@ -95,6 +97,7 @@ func scaleFromRetina(img1 image.Image, name string) error {
 	return nil
 }
 
+//Scales an image from @3x -> @2x @1x
 func scaleFromSuperRetina(img1 image.Image, name string) error {
 	originalWidth := float64(img1.Bounds().Max.X)
 	originalHeight := float64(img1.Bounds().Max.Y)
