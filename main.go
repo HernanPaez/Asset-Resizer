@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,39 +51,36 @@ func main() {
 
 	arguments := os.Args[1:]
 	path := arguments[0]
-	name := strings.TrimSuffix(path, filepath.Ext(path))
 
-	fmt.Fprintf(os.Stdout, "- Opening file: %s\n", path)
-
-	fImg, err := os.Open(path)
+	stat, err := os.Stat(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Open Error: %s", err.Error())
-		return
-	}
-	defer fImg.Close()
-
-	img1, _, err := image.Decode(fImg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Decode Error: %s", err.Error())
+		fmt.Fprintf(os.Stderr, "Stat Error: %s", err.Error())
+		os.Exit(1)
 		return
 	}
 
-	if strings.Contains(name, "@2x") {
-		fmt.Fprintf(os.Stdout, "\n- Resizing from @2x...\n")
-		name = strings.TrimSuffix(name, "@2x")
-		err = scaleFromRetina(img1, name)
+	if stat.IsDir() {
+		files, err := ioutil.ReadDir(path)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err.Error())
+			fmt.Fprintf(os.Stderr, "Directory Reading Error: %s", err.Error())
+			os.Exit(1)
 			return
 		}
+
+		for _, f := range files {
+			if f.IsDir() == false && strings.ToLower(filepath.Ext(f.Name())) == ".png" {
+
+				err := resizeFileAtPath(path + "/" + f.Name())
+				if err != nil {
+					os.Exit(1)
+					return
+				}
+
+			}
+		}
+
 	} else {
-		fmt.Fprintf(os.Stdout, "\n- Resizing from @3x...\n")
-		name = strings.TrimSuffix(name, "@3x")
-		err = scaleFromSuperRetina(img1, name)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s", err.Error())
-			return
-		}
+		resizeFileAtPath(path)
 	}
 
 	fmt.Fprintf(os.Stdout, "\nDone!\n")
@@ -113,6 +111,45 @@ func scaleFromRetina(img1 image.Image, name string) error {
 	}
 
 	return nil
+}
+
+func resizeFileAtPath(path string) error {
+	name := strings.TrimSuffix(path, filepath.Ext(path))
+	fmt.Fprintf(os.Stdout, "\n- Resizing file: %s", path)
+
+	fImg, err := os.Open(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Open Error: %s", err.Error())
+		return err
+	}
+	defer fImg.Close()
+
+	img1, _, err := image.Decode(fImg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Decode Error: %s", err.Error())
+		return err
+	}
+
+	if strings.Contains(name, "@2x") {
+		fmt.Fprintf(os.Stdout, "\n- Resizing from @2x...\n")
+		name = strings.TrimSuffix(name, "@2x")
+		err = scaleFromRetina(img1, name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err.Error())
+			return err
+		}
+	} else {
+		fmt.Fprintf(os.Stdout, "\n- Resizing from @3x...\n")
+		name = strings.TrimSuffix(name, "@3x")
+		err = scaleFromSuperRetina(img1, name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s", err.Error())
+			return err
+		}
+	}
+
+	return nil
+
 }
 
 //Scales an image from @3x -> @2x @1x
